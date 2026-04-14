@@ -1,0 +1,50 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "py-sync-contracts"
+version = "0.1.0"
+description = "strategy_symbol_sync 채널 계약 패키지 (Publisher ↔ Subscriber SSoT)"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Private" }
+dependencies = [
+    "typing_extensions>=4.0",
+]
+
+[project.optional-dependencies]
+# Publisher helper 사용 시 추가 설치 필요
+# pip install 'py-sync-contracts[publisher]'
+publisher = ["redis>=4.0"]
+
+# 개발/테스트 환경
+dev = [
+    "pytest>=7.0",
+    "mypy>=1.5",
+    "fakeredis>=2.0",
+    "redis>=4.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["py_sync_contracts*"]
+
+[tool.setuptools.package-data]
+py_sync_contracts = ["py.typed"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v --tb=short"
+
+[tool.mypy]
+strict = true
+python_version = "3.11"
+
+[[tool.mypy.overrides]]
+module = "redis.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "fakeredis.*"
+ignore_missing_imports = true
