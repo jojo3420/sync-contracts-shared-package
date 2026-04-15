@@ -31,9 +31,9 @@ class TestSyncEventType:
 
 
 class TestTargetType:
-    def test_count_is_4(self) -> None:
-        # Plan §2.4 — 4종 고정 (v0.1.0).
-        assert len(TargetType) == 4
+    def test_count_is_5(self) -> None:
+        # v0.2.0 — 5종 (STRATEGY_EXCHANGE_SYMBOL 추가).
+        assert len(TargetType) == 5
 
     def test_values_match_table_names(self) -> None:
         # enum value == 실제 DB 테이블명 1:1 대응
@@ -41,9 +41,11 @@ class TestTargetType:
         assert TargetType.STRATEGY_TIMEFRAME_CONFIG.value == "strategy_timeframe_config"
         assert TargetType.TRADING_SYMBOLS.value == "trading_symbols"
         assert TargetType.SYMBOL_RISK_CONFIG.value == "symbol_risk_config"
+        assert TargetType.STRATEGY_EXCHANGE_SYMBOL.value == "strategy_exchange_symbol"
 
     def test_roundtrip_from_string(self) -> None:
         assert TargetType("trading_symbols") is TargetType.TRADING_SYMBOLS
+        assert TargetType("strategy_exchange_symbol") is TargetType.STRATEGY_EXCHANGE_SYMBOL
 
 
 class TestSyncAction:

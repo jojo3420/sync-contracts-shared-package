@@ -22,15 +22,17 @@ class SyncEventType(str, Enum):
 
 
 class TargetType(str, Enum):
-    """이벤트 대상 테이블 종류 — 4종 고정 (v0.1.0).
+    """이벤트 대상 테이블 종류 — 5종 고정 (v0.2.0).
 
     값이 실제 DB 테이블명과 1:1 대응. 테이블명 변경 시 major bump.
+    v0.2.0: STRATEGY_EXCHANGE_SYMBOL 추가 (전략×거래소×심볼×tf 4차원 매핑 신규 테이블).
     """
 
     BACKTEST_STRATEGY = "backtest_strategy"
     STRATEGY_TIMEFRAME_CONFIG = "strategy_timeframe_config"
     TRADING_SYMBOLS = "trading_symbols"
     SYMBOL_RISK_CONFIG = "symbol_risk_config"
+    STRATEGY_EXCHANGE_SYMBOL = "strategy_exchange_symbol"
 
 
 class SyncAction(str, Enum):

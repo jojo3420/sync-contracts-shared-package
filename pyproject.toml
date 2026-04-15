@@ -4,10 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "py-sync-contracts"
-version = "0.1.0"
+version = "0.2.0"
 description = "strategy_symbol_sync 채널 계약 패키지 (Publisher ↔ Subscriber SSoT)"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.10"
 license = { text = "Private" }
 dependencies = [
     "typing_extensions>=4.0",
@@ -39,7 +39,7 @@ addopts = "-v --tb=short"
 
 [tool.mypy]
 strict = true
-python_version = "3.11"
+python_version = "3.10"
 
 [[tool.mypy.overrides]]
 module = "redis.*"

@@ -1,0 +1,77 @@
+# Trading System — 통합 아키텍처 (SSoT)
+
+> 3개 프로젝트 공용 단일 출처. 변경 시 모든 프로젝트 영향 → PR 리뷰 필수.
+> 경로 기준: `gitroom/python/` 하위 동일 레이아웃 (dev=로컬 macOS, prod=192.168.0.92).
+
+## 1. 프로젝트 & 역할
+
+| 프로젝트 | 역할 | 기술 |
+|---------|------|------|
+| `py-algo-stragegy-system-v1` | 전략 실행, Signal 생성, Sync subscriber | Python |
+| `order-interface-py-v1` | 거래소 주문 체결(Upbit/Bitget/KIS), 시계열 수집 API | Python / FastAPI |
+| `trading-admin-dashboard` | 어드민 대시보드 툴 (운영/모니터링/메타정보 관리 UI), Sync publisher | FastAPI + Next.js |
+| `sync-contracts-shared-package` | Enum/payload/채널 계약 패키지 (본 문서 포함) | Python lib |
+
+## 2. 데이터 흐름
+
+```
+dashboard ──(Redis pub: strategy_symbol_sync)──▶ algo
+dashboard ──(DB write: 메타 테이블)──▶ PostgreSQL ◀── algo/order (read)
+algo ──(HTTP POST /signals)──▶ order ──(REST)──▶ 거래소
+algo ──(DB write)──▶ signal_request
+order ──(DB write)──▶ order_history
+order ──(HTTP GET /candles, /ticker)──▶ algo
+```
+
+- **흐름①** 메타 동기화: dashboard가 DB 업데이트 후 Redis publish → algo가 subscribe하여 핫 리로드
+- **흐름②** Signal 체결: algo가 signal_request 기록 + order-interface HTTP 호출 → 거래소 체결
+- **흐름③** 시세 조회: order-interface가 수집·정규화한 시계열을 algo가 REST로 조회
+
+## 3. 계약 (py_sync_contracts)
+
+| 항목 | 값 | 파일 |
+|------|-----|------|
+| Redis 채널 | `strategy_symbol_sync` | `channels.py` (`SYNC_CHANNEL`) |
+| Publisher | dashboard (단독) | — |
+| Subscriber | algo | — |
+| Payload | `SyncPayload` | `payload.py` |
+| 이벤트 타입 (5) | `STRATEGY_PARAMS_CHANGED`, `STRATEGY_TIMEFRAME_CHANGED`, `SYMBOL_ACTIVE_CHANGED`, `SYMBOL_STRATEGY_MAPPING_CHANGED`, `SYMBOL_RISK_CHANGED` | `enums.SyncEventType` |
+| 대상 테이블 (4) | `backtest_strategy`, `strategy_timeframe_config`, `trading_symbols`, `symbol_risk_config` | `enums.TargetType` |
+| Action | `INSERT` / `UPDATE` / `DELETE` | `enums.SyncAction` |
+
+**⚠ 미정의**: algo↔order HTTP signal payload 스키마는 아직 `py_sync_contracts`에 없음 → 계약화 필요.
+
+## 4. 소유권 (Ownership)
+
+> **원칙**: 쓰기 권한을 가진 프로젝트가 유일한 소유자. 타 프로젝트는 읽기 또는 API 호출로만 접근.
+
+| 리소스 | 쓰기 | 읽기 |
+|--------|------|------|
+| `backtest_strategy`, `strategy_timeframe_config`, `trading_symbols`, `symbol_risk_config` | dashboard | dashboard, algo, order* |
+| `signal_request` | algo | algo, dashboard |
+| `order_history` | order | order, dashboard, algo |
+| Redis `strategy_symbol_sync` | dashboard (pub) | algo (sub) |
+| 거래소 API Key | order | order |
+
+\* `trading_symbols`는 order도 읽음.
+
+## 5. 버전 정책
+
+| 변경 | bump | 릴리스 순서 |
+|------|------|-------------|
+| enum 값 추가 / payload optional 필드 추가 | minor | 즉시 배포 가능 |
+| enum 삭제·변경 / payload 필수 필드 변경 / 채널명·테이블명 변경 | **major** | contracts → dashboard → algo → order |
+
+## 6. 미확정 항목 (TODO)
+
+- [ ] algo↔order signal payload 스키마를 `py_sync_contracts`로 승격
+- [ ] order-interface 인증 방식 확정 (API Key / mTLS / IP 화이트리스트)
+- [ ] signal_request ↔ order_history correlation id 표준화
+- [ ] 장애 degradation 전략 (Redis/order/거래소 각각)
+- [ ] order-interface 시계열 API 스펙 문서화
+
+## 7. 변경 이력
+
+| 날짜 | 변경 |
+|------|------|
+| 2026-04-15 | 최초 작성 — 3개 프로젝트 통합 SSoT 수립 |
