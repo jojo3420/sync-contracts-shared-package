@@ -9,9 +9,15 @@ from enum import Enum
 
 
 class SyncEventType(str, Enum):
-    """strategy_symbol_sync 채널 이벤트 종류 — 5종 고정 (v0.1.0).
+    """strategy_symbol_sync 채널 이벤트 종류.
 
     str Enum 이므로 json.dumps 없이 .value로 직렬화 가능.
+
+    버전 이력:
+        v0.1.0: 초기 5종 (STRATEGY_PARAMS_CHANGED, STRATEGY_TIMEFRAME_CHANGED,
+                SYMBOL_ACTIVE_CHANGED, SYMBOL_STRATEGY_MAPPING_CHANGED, SYMBOL_RISK_CHANGED).
+        v0.4.0: SYMBOL_COLLECTION_LINKED 추가 (symbol-mapping-auto feature — 수집 타겟
+                신규 활성화 시 py-algo backfill 트리거용).
     """
 
     STRATEGY_PARAMS_CHANGED = "STRATEGY_PARAMS_CHANGED"
@@ -19,15 +25,20 @@ class SyncEventType(str, Enum):
     SYMBOL_ACTIVE_CHANGED = "SYMBOL_ACTIVE_CHANGED"
     SYMBOL_STRATEGY_MAPPING_CHANGED = "SYMBOL_STRATEGY_MAPPING_CHANGED"
     SYMBOL_RISK_CHANGED = "SYMBOL_RISK_CHANGED"
+    SYMBOL_COLLECTION_LINKED = "SYMBOL_COLLECTION_LINKED"
 
 
 class TargetType(str, Enum):
-    """이벤트 대상 테이블 종류 (v0.3.0).
+    """이벤트 대상 테이블 종류.
 
     값이 실제 DB 테이블명과 1:1 대응. 테이블명 변경 시 major bump.
-    v0.2.0: STRATEGY_EXCHANGE_SYMBOL 추가.
-    v0.3.0: schema-normalization — rename 반영 + STRATEGY_SYMBOL_MAPPING 추가.
-             BACKTEST_STRATEGY, STRATEGY_TIMEFRAME_CONFIG, STRATEGY_EXCHANGE_SYMBOL deprecated.
+
+    버전 이력:
+        v0.2.0: STRATEGY_EXCHANGE_SYMBOL 추가.
+        v0.3.0: schema-normalization — rename 반영 + STRATEGY_SYMBOL_MAPPING 추가.
+                 BACKTEST_STRATEGY, STRATEGY_TIMEFRAME_CONFIG, STRATEGY_EXCHANGE_SYMBOL deprecated.
+        v0.4.0: COLLECTION_TARGETS 추가 (symbol-mapping-auto feature — 수집 타겟
+                orchestrator 가 publish 시 target_type 으로 사용).
     """
 
     # 현행 (renamed)
@@ -37,6 +48,7 @@ class TargetType(str, Enum):
     SYMBOLS = "symbols"
     SYMBOL_RISK_CONFIG = "symbol_risk_config"
     STRATEGY_SYMBOL_MAPPING = "strategy_symbol_mapping"
+    COLLECTION_TARGETS = "collection_targets"
 
     # deprecated (하위호환 — Step 4에서 제거)
     BACKTEST_STRATEGY = "strategies"  # alias → same value as STRATEGIES

@@ -25,9 +25,11 @@ from py_sync_contracts.channels import SYNC_CHANNEL
 from py_sync_contracts.enums import SyncAction, SyncEventType, TargetType
 from py_sync_contracts.payload import PayloadError, SyncPayload, parse_payload
 from py_sync_contracts.publisher import publish_sync_event
+from py_sync_contracts.strategy_requirements import calculate_required_candles
 from py_sync_contracts.validators import ACTOR_REGEX
 
-__version__: str = "0.1.0"
+# pyproject.toml 과 반드시 일치시킨다. 드리프트 방지.
+__version__: str = "0.4.0"
 
 __all__ = [
     "__version__",
@@ -45,4 +47,6 @@ __all__ = [
     "publish_sync_event",
     # validator
     "ACTOR_REGEX",
+    # strategy requirements (v0.4.0)
+    "calculate_required_candles",
 ]
