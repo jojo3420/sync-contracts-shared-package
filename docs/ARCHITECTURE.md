@@ -51,7 +51,7 @@ order ──(HTTP GET /candles, /ticker)──▶ algo
 | `backtest_strategy`, `strategy_timeframe_config`, `trading_symbols`, `symbol_risk_config` | dashboard | dashboard, algo, order\* |
 | `strategy_symbol_mapping` (v0.3.0 rename) | dashboard | dashboard, algo |
 | `symbols` (v0.3.0 신설) | dashboard | dashboard, algo, order |
-| `collection_targets` (v0.4.0, **소유권 이전**) | dashboard \*\* | dashboard, algo, order |
+| `collection_targets` (v0.4.0, **소유권 이전**) \*\*\* | dashboard \*\* | dashboard, algo, order |
 | `signal_request` | algo | algo, dashboard |
 | `order_history` | order | order, dashboard, algo |
 | Redis `strategy_symbol_sync` | dashboard (pub) | algo (sub) |
@@ -64,6 +64,11 @@ order ──(HTTP GET /candles, /ticker)──▶ algo
 - TO-BE: dashboard `StrategySymbolOrchestrator` 가 매핑 저장의 부수효과로 upsert/soft-deactivate 수행. py-algo 는 **읽기 전용** 으로 전환.
 - 근거: `grep -rn "INSERT\|UPDATE.*collection_targets" py-algo-stragegy-system-v1/` → 결과 0 건 (2026-04-17 실측). 매핑 주체 = 수집 주체가 자연스러움.
 - 구독 신호: py-algo 는 `SYMBOL_COLLECTION_LINKED` 이벤트로 "새 수집 타겟 생성" 을 비동기 인지 가능 (handler 구현은 P2.1 follow-up).
+
+\*\*\* **`sync_version` 컬럼 보강 (2026-04-18, collection-targets-sync-version)**
+- `TargetType` enum 에 테이블을 추가한 owner repo 는 반드시 `sync_version BIGINT NOT NULL DEFAULT 0` 컬럼을 제공해야 한다. subscriber 는 `SELECT MAX(sync_version)` (state init) + `WHERE sync_version > :last` (catchup) 프로토콜을 전 테이블에 동일하게 적용하므로, 컬럼 부재 시 `column does not exist` 런타임 에러 발생.
+- v0.4.0 최초 배포 시 dashboard 측 migration 을 누락한 gap 을 2026-04-18 dashboard `backend/migrations/029_collection_targets_add_sync_version.sql` 로 해소 (idempotent `ADD COLUMN IF NOT EXISTS`).
+- 향후 enum 에 테이블 추가 시 이 owner 의무를 Plan/Design 체크리스트에 반드시 포함한다.
 
 ## 5. 버전 정책
 
@@ -86,3 +91,4 @@ order ──(HTTP GET /candles, /ticker)──▶ algo
 |------|------|
 | 2026-04-15 | 최초 작성 — 3개 프로젝트 통합 SSoT 수립 |
 | 2026-04-17 | v0.3.0: `SYMBOLS`·`STRATEGY_SYMBOL_MAPPING` TargetType 추가 (schema-normalization). v0.4.0: `calculate_required_candles` 순수함수 승격 + `SYMBOL_COLLECTION_LINKED`·`COLLECTION_TARGETS` 추가 + `collection_targets` 쓰기 소유권 py-algo → dashboard 이전 (symbol-mapping-auto P2/3 Module 5). py-algo 는 `get_required_candles` 를 sync-contracts 위임으로 전환. |
+| 2026-04-18 | dashboard `collection_targets` 에 `sync_version BIGINT NOT NULL DEFAULT 0` 컬럼 보강 (`backend/migrations/029_collection_targets_add_sync_version.sql`, idempotent). symbol-mapping-auto v0.4.0 에서 누락된 owner 의무 해소. §4 footnote \*\*\* 추가: "enum 에 테이블 추가 시 owner 는 sync_version 컬럼 제공 의무". py-algo / order 측 변경 없음. (collection-targets-sync-version PDCA) |
