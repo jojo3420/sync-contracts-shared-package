@@ -18,6 +18,9 @@ class SyncEventType(str, Enum):
                 SYMBOL_ACTIVE_CHANGED, SYMBOL_STRATEGY_MAPPING_CHANGED, SYMBOL_RISK_CHANGED).
         v0.4.0: SYMBOL_COLLECTION_LINKED 추가 (symbol-mapping-auto feature — 수집 타겟
                 신규 활성화 시 py-algo backfill 트리거용).
+        v0.5.0: COLLECTION_TARGET_CHANGED 추가 (timeseries-rca-auto-sync feature —
+                전략심볼 기반 SSoT 변경을 order-api 구독자가 APScheduler add/remove
+                로 반영. action=INSERT/UPDATE/DELETE 분기).
     """
 
     STRATEGY_PARAMS_CHANGED = "STRATEGY_PARAMS_CHANGED"
@@ -26,6 +29,8 @@ class SyncEventType(str, Enum):
     SYMBOL_STRATEGY_MAPPING_CHANGED = "SYMBOL_STRATEGY_MAPPING_CHANGED"
     SYMBOL_RISK_CHANGED = "SYMBOL_RISK_CHANGED"
     SYMBOL_COLLECTION_LINKED = "SYMBOL_COLLECTION_LINKED"
+    # v0.5.0
+    COLLECTION_TARGET_CHANGED = "COLLECTION_TARGET_CHANGED"
 
 
 class TargetType(str, Enum):

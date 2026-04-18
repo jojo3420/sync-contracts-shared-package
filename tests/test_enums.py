@@ -5,10 +5,11 @@ from py_sync_contracts import SyncAction, SyncEventType, TargetType
 
 
 class TestSyncEventType:
-    def test_count_is_6(self) -> None:
+    def test_count_is_7(self) -> None:
         # v0.1.0: 5종 / v0.4.0: SYMBOL_COLLECTION_LINKED 추가 → 6종.
+        # v0.5.0: COLLECTION_TARGET_CHANGED 추가 → 7종.
         # 추가 시 minor bump 필요.
-        assert len(SyncEventType) == 6
+        assert len(SyncEventType) == 7
 
     def test_all_values_are_strings(self) -> None:
         for member in SyncEventType:
@@ -28,12 +29,19 @@ class TestSyncEventType:
         assert SyncEventType.SYMBOL_RISK_CHANGED.value == "SYMBOL_RISK_CHANGED"
         # v0.4.0 추가
         assert SyncEventType.SYMBOL_COLLECTION_LINKED.value == "SYMBOL_COLLECTION_LINKED"
+        # v0.5.0 추가
+        assert SyncEventType.COLLECTION_TARGET_CHANGED.value == "COLLECTION_TARGET_CHANGED"
 
     def test_roundtrip_from_string(self) -> None:
         assert SyncEventType("SYMBOL_ACTIVE_CHANGED") is SyncEventType.SYMBOL_ACTIVE_CHANGED
         assert (
             SyncEventType("SYMBOL_COLLECTION_LINKED")
             is SyncEventType.SYMBOL_COLLECTION_LINKED
+        )
+        # v0.5.0
+        assert (
+            SyncEventType("COLLECTION_TARGET_CHANGED")
+            is SyncEventType.COLLECTION_TARGET_CHANGED
         )
 
 
