@@ -23,19 +23,25 @@ from __future__ import annotations
 
 from py_sync_contracts.channels import SYNC_CHANNEL
 from py_sync_contracts.enums import SyncAction, SyncEventType, TargetType
+from py_sync_contracts.execution_outcome import (
+    OUTCOME_REASON_WHITELIST,
+    ExecutionOutcome,
+    ExecutionReasonCode,
+    is_valid_outcome_reason,
+)
 from py_sync_contracts.payload import PayloadError, SyncPayload, parse_payload
 from py_sync_contracts.publisher import publish_sync_event
 from py_sync_contracts.strategy_requirements import calculate_required_candles
 from py_sync_contracts.validators import ACTOR_REGEX
 
 # pyproject.toml 과 반드시 일치시킨다. 드리프트 방지.
-__version__: str = "0.6.0"
+__version__: str = "0.7.0"
 
 __all__ = [
     "__version__",
     # 채널
     "SYNC_CHANNEL",
-    # enum
+    # enum (sync 채널)
     "SyncEventType",
     "TargetType",
     "SyncAction",
@@ -49,4 +55,9 @@ __all__ = [
     "ACTOR_REGEX",
     # strategy requirements (v0.4.0)
     "calculate_required_candles",
+    # execution outcome (v0.7.0 — strategy-execution-observability)
+    "ExecutionOutcome",
+    "ExecutionReasonCode",
+    "OUTCOME_REASON_WHITELIST",
+    "is_valid_outcome_reason",
 ]

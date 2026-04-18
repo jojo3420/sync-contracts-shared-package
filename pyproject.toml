@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "py-sync-contracts"
-version = "0.6.0"
-description = "strategy_symbol_sync 채널 계약 패키지 (Publisher ↔ Subscriber SSoT)"
+version = "0.7.0"
+description = "strategy_symbol_sync 채널 계약 + 전략 실행 결과 enum SSoT (Publisher ↔ Subscriber)"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
