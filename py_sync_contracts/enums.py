@@ -21,6 +21,11 @@ class SyncEventType(str, Enum):
         v0.5.0: COLLECTION_TARGET_CHANGED 추가 (timeseries-rca-auto-sync feature —
                 전략심볼 기반 SSoT 변경을 order-api 구독자가 APScheduler add/remove
                 로 반영. action=INSERT/UPDATE/DELETE 분기).
+        v0.6.0: SYMBOL_DEPRECATED 추가 (timeseries-listing-deprecated-detect feature —
+                Dashboard ListingWatcherJob이 Upbit/Bitget 상장폐지 감지 시 publish.
+                order-api: collection_targets.is_active=false + APScheduler remove.
+                py-algo: strategy_exchange_symbol 의 paper/live_trading 비활성 + 열린
+                포지션 자동 청산 금지(경고 로그만)).
     """
 
     STRATEGY_PARAMS_CHANGED = "STRATEGY_PARAMS_CHANGED"
@@ -31,6 +36,8 @@ class SyncEventType(str, Enum):
     SYMBOL_COLLECTION_LINKED = "SYMBOL_COLLECTION_LINKED"
     # v0.5.0
     COLLECTION_TARGET_CHANGED = "COLLECTION_TARGET_CHANGED"
+    # v0.6.0
+    SYMBOL_DEPRECATED = "SYMBOL_DEPRECATED"
 
 
 class TargetType(str, Enum):
