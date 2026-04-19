@@ -13,6 +13,11 @@ Plan SC: SC-2 — py-algo 모든 계측 지점에서 outcome+reason_code 생성.
     v0.7.0: 초기 도입 (strategy-execution-observability feature).
             ExecutionOutcome 12종 + ExecutionReasonCode 약 30종.
             py-algo Writer + dashboard canonical 양쪽 공유 계약.
+    v0.8.0: trading-automation-truthfulness feature 연계.
+            ExecutionOutcome.SKIP_AUTOMATION_OFF + ExecutionReasonCode
+            .SKIP_ORDER_AUTOMATION_OFF 신규 추가 (하위 호환).
+            dashboard master switch OFF 상태에서 py-algo 가 trade dispatch
+            skip 시 기록할 outcome/reason 계약.
 
 버전 규칙:
     - minor bump: 새 outcome/reason 값 추가 (하위 호환).
@@ -46,6 +51,9 @@ class ExecutionOutcome(str, Enum):
     SKIP_STALE_DATA = "SKIP_STALE_DATA"
     SKIP_ORDER_VALUE_UNDER_MIN = "SKIP_ORDER_VALUE_UNDER_MIN"
     SKIP_SYMBOL_DEPRECATED = "SKIP_SYMBOL_DEPRECATED"
+    # v0.8.0 — trading-automation-truthfulness: master switch OFF 상태에서
+    # dispatch 단계만 skip (시그널 평가는 유지).
+    SKIP_AUTOMATION_OFF = "SKIP_AUTOMATION_OFF"
     # ── ERROR (예외) ───────────────────────────────────────────────────
     ERROR_STRATEGY_EXCEPTION = "ERROR_STRATEGY_EXCEPTION"
     ERROR_EXCHANGE_API = "ERROR_EXCHANGE_API"
@@ -85,6 +93,9 @@ class ExecutionReasonCode(str, Enum):
     # ── SKIP_SYMBOL_DEPRECATED ─────────────────────────────────────────
     LISTING_DEPRECATED_UPBIT = "LISTING_DEPRECATED_UPBIT"
     LISTING_DEPRECATED_BITGET = "LISTING_DEPRECATED_BITGET"
+    # ── SKIP_AUTOMATION_OFF (v0.8.0) ────────────────────────────────────
+    # dashboard master switch off 로 dispatch 직전에 skip 된 경우 기록.
+    SKIP_ORDER_AUTOMATION_OFF = "SKIP_ORDER_AUTOMATION_OFF"
     # ── ERROR_STRATEGY_EXCEPTION ───────────────────────────────────────
     GENERATE_SIGNALS_FAILED = "GENERATE_SIGNALS_FAILED"
     REGIME_CLASSIFIER_FAILED = "REGIME_CLASSIFIER_FAILED"
@@ -145,6 +156,11 @@ OUTCOME_REASON_WHITELIST: dict[ExecutionOutcome, frozenset[ExecutionReasonCode |
     ExecutionOutcome.SKIP_SYMBOL_DEPRECATED: frozenset({
         ExecutionReasonCode.LISTING_DEPRECATED_UPBIT,
         ExecutionReasonCode.LISTING_DEPRECATED_BITGET,
+        None,
+    }),
+    # v0.8.0 — automation master switch off 로 dispatch skip.
+    ExecutionOutcome.SKIP_AUTOMATION_OFF: frozenset({
+        ExecutionReasonCode.SKIP_ORDER_AUTOMATION_OFF,
         None,
     }),
     ExecutionOutcome.ERROR_STRATEGY_EXCEPTION: frozenset({

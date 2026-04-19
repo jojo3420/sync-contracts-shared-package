@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "py-sync-contracts"
-version = "0.7.0"
+version = "0.8.0"
 description = "strategy_symbol_sync 채널 계약 + 전략 실행 결과 enum SSoT (Publisher ↔ Subscriber)"
 readme = "README.md"
 requires-python = ">=3.10"
