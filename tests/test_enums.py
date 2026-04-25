@@ -54,14 +54,15 @@ class TestSyncEventType:
 
 
 class TestTargetType:
-    def test_count_is_8(self) -> None:
+    def test_count_is_9(self) -> None:
         # len(Enum) 은 unique value 기준 — alias 는 동일 member 로 카운트.
         # v0.3.0: STRATEGIES, STRATEGY_TIMEFRAMES, TRADING_SYMBOLS, SYMBOLS,
         #         SYMBOL_RISK_CONFIG, STRATEGY_SYMBOL_MAPPING, STRATEGY_EXCHANGE_SYMBOL
         #         → 7 unique.
         # v0.4.0: COLLECTION_TARGETS 추가 → 8 unique.
+        # v0.9.0: PAIR_TRADE_CONFIG 추가 → 9 unique. (pair-trade-dashboard-integration)
         # (BACKTEST_STRATEGY, STRATEGY_TIMEFRAME_CONFIG 는 alias → 카운트 미포함)
-        assert len(TargetType) == 8
+        assert len(TargetType) == 9
 
     def test_current_values_match_table_names(self) -> None:
         # 현행 (renamed, v0.3.0+) — enum value == 실제 DB 테이블명
@@ -73,6 +74,8 @@ class TestTargetType:
         assert TargetType.STRATEGY_SYMBOL_MAPPING.value == "strategy_symbol_mapping"
         # v0.4.0 추가
         assert TargetType.COLLECTION_TARGETS.value == "collection_targets"
+        # v0.9.0 추가
+        assert TargetType.PAIR_TRADE_CONFIG.value == "pair_trade_config"
 
     def test_deprecated_aliases_preserved(self) -> None:
         # 하위호환용 alias — v0.3.0 에서 deprecated 되었지만 Step 4 까지 유지.
@@ -88,6 +91,8 @@ class TestTargetType:
         assert TargetType("strategy_exchange_symbol") is TargetType.STRATEGY_EXCHANGE_SYMBOL
         # v0.4.0
         assert TargetType("collection_targets") is TargetType.COLLECTION_TARGETS
+        # v0.9.0
+        assert TargetType("pair_trade_config") is TargetType.PAIR_TRADE_CONFIG
 
 
 class TestSyncAction:

@@ -51,6 +51,10 @@ class TargetType(str, Enum):
                  BACKTEST_STRATEGY, STRATEGY_TIMEFRAME_CONFIG, STRATEGY_EXCHANGE_SYMBOL deprecated.
         v0.4.0: COLLECTION_TARGETS 추가 (symbol-mapping-auto feature — 수집 타겟
                 orchestrator 가 publish 시 target_type 으로 사용).
+        v0.9.0: PAIR_TRADE_CONFIG 추가 (pair-trade-dashboard-integration feature —
+                dashboard ↔ py-algo 간 페어 트레이드 enabled/paused 토글 sync.
+                별도 채널 신설 대신 단일 SYNC_CHANNEL + TargetType 라우팅 모델
+                재사용. Design Ref: pair-trade-dashboard-integration.design.md v0.2 §4.8).
     """
 
     # 현행 (renamed)
@@ -61,6 +65,8 @@ class TargetType(str, Enum):
     SYMBOL_RISK_CONFIG = "symbol_risk_config"
     STRATEGY_SYMBOL_MAPPING = "strategy_symbol_mapping"
     COLLECTION_TARGETS = "collection_targets"
+    # v0.9.0
+    PAIR_TRADE_CONFIG = "pair_trade_config"
 
     # deprecated (하위호환 — Step 4에서 제거)
     BACKTEST_STRATEGY = "strategies"  # alias → same value as STRATEGIES
