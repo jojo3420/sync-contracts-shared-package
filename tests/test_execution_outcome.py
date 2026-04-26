@@ -83,15 +83,17 @@ class TestExecutionReasonCode:
 
     v0.7.0 초기 약 30종 — 값 추가 시 minor bump.
     v0.8.0: SKIP_ORDER_AUTOMATION_OFF 추가 → 32.
+    v0.10.0: SIGNAL_VALIDATION_FAILED 추가 → 33.
     """
 
-    def test_count_matches_v080(self) -> None:
+    def test_count_matches_v0100(self) -> None:
         # v0.7.0 기준 31종. 추가 시 테스트 갱신 필수.
         # 내역: SUCCESS(2) + HOLD(2) + REGIME(2) + FILTER(3) + STALE(2)
         #     + ORDER_VAL(3) + DEPRECATED(2) + STRATEGY_EXC(2) + CCXT(4)
         #     + ORDER_API(4) + NETWORK(3) + UNKNOWN(2) = 31.
-        # v0.8.0: + SKIP_ORDER_AUTOMATION_OFF = 32.
-        assert len(ExecutionReasonCode) == 32
+        # v0.8.0:  + SKIP_ORDER_AUTOMATION_OFF = 32.
+        # v0.10.0: + SIGNAL_VALIDATION_FAILED   = 33.
+        assert len(ExecutionReasonCode) == 33
 
     def test_all_values_within_db_varchar64(self) -> None:
         """DB 컬럼 reason_code VARCHAR(64) 정합."""

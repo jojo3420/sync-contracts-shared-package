@@ -18,6 +18,11 @@ Plan SC: SC-2 — py-algo 모든 계측 지점에서 outcome+reason_code 생성.
             .SKIP_ORDER_AUTOMATION_OFF 신규 추가 (하위 호환).
             dashboard master switch OFF 상태에서 py-algo 가 trade dispatch
             skip 시 기록할 outcome/reason 계약.
+    v0.10.0: strategy-snapshot-unified feature 연계 (py-algo prod 사고 대응).
+            ExecutionReasonCode.SIGNAL_VALIDATION_FAILED 신규 추가 (하위 호환).
+            py-algo SignalValidator 계열 오류 (signal_data schema 위반) 가
+            ERROR_UNKNOWN/UNCLASSIFIED 로 silent 강등되던 갭을 분류.
+            iterator 가 SignalValidationError marker 만 catch 해 본 reason 으로 분류.
 
 버전 규칙:
     - minor bump: 새 outcome/reason 값 추가 (하위 호환).
@@ -99,6 +104,10 @@ class ExecutionReasonCode(str, Enum):
     # ── ERROR_STRATEGY_EXCEPTION ───────────────────────────────────────
     GENERATE_SIGNALS_FAILED = "GENERATE_SIGNALS_FAILED"
     REGIME_CLASSIFIER_FAILED = "REGIME_CLASSIFIER_FAILED"
+    # v0.10.0 — strategy-snapshot-unified: validator origin schema/도메인 위반.
+    # py-algo SignalValidator 가 raise 하는 SignalValidationError marker class
+    # (ValueError subclass) 만 본 reason 으로 분류. 일반 ValueError 는 ERROR_UNKNOWN.
+    SIGNAL_VALIDATION_FAILED = "SIGNAL_VALIDATION_FAILED"
     # ── ERROR_EXCHANGE_API ─────────────────────────────────────────────
     CCXT_TIMEOUT = "CCXT_TIMEOUT"
     CCXT_5XX = "CCXT_5XX"
@@ -166,6 +175,8 @@ OUTCOME_REASON_WHITELIST: dict[ExecutionOutcome, frozenset[ExecutionReasonCode |
     ExecutionOutcome.ERROR_STRATEGY_EXCEPTION: frozenset({
         ExecutionReasonCode.GENERATE_SIGNALS_FAILED,
         ExecutionReasonCode.REGIME_CLASSIFIER_FAILED,
+        # v0.10.0 — strategy-snapshot-unified
+        ExecutionReasonCode.SIGNAL_VALIDATION_FAILED,
         None,
     }),
     ExecutionOutcome.ERROR_EXCHANGE_API: frozenset({

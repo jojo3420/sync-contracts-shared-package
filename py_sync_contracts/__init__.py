@@ -35,7 +35,7 @@ from py_sync_contracts.strategy_requirements import calculate_required_candles
 from py_sync_contracts.validators import ACTOR_REGEX
 
 # pyproject.toml 과 반드시 일치시킨다. 드리프트 방지.
-__version__: str = "0.9.0"
+__version__: str = "0.10.0"
 
 __all__ = [
     "__version__",
