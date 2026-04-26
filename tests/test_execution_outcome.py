@@ -20,12 +20,15 @@ class TestExecutionOutcome:
 
     v0.7.0 초기 12 계열 — 추가 시 minor bump + 이 테스트 수 갱신.
     v0.8.0: SKIP_AUTOMATION_OFF 추가 → 13.
+    v0.11.0: SKIP_NO_POSITION_TO_CLOSE + SKIP_DUPLICATE_OPEN + ERROR_DISPATCH_GUARD → 16.
     """
 
-    def test_count_is_13(self) -> None:
+    def test_count_is_16(self) -> None:
         # v0.7.0: SUCCESS(1) + NO_SIGNAL(1) + SKIP(5) + ERROR(5) = 12
-        # v0.8.0: + SKIP_AUTOMATION_OFF = 13
-        assert len(ExecutionOutcome) == 13
+        # v0.8.0:  + SKIP_AUTOMATION_OFF                            = 13
+        # v0.11.0: + SKIP_NO_POSITION_TO_CLOSE + SKIP_DUPLICATE_OPEN
+        #          + ERROR_DISPATCH_GUARD (signal-guard-defense-in-depth) = 16
+        assert len(ExecutionOutcome) == 16
 
     def test_all_values_are_strings(self) -> None:
         for member in ExecutionOutcome:
@@ -84,16 +87,19 @@ class TestExecutionReasonCode:
     v0.7.0 초기 약 30종 — 값 추가 시 minor bump.
     v0.8.0: SKIP_ORDER_AUTOMATION_OFF 추가 → 32.
     v0.10.0: SIGNAL_VALIDATION_FAILED 추가 → 33.
+    v0.11.0: CLOSE_WITHOUT_POSITION + DUPLICATE_OPEN_DENIED + DISPATCH_GUARD_FAILED → 36.
     """
 
-    def test_count_matches_v0100(self) -> None:
+    def test_count_matches_v0110(self) -> None:
         # v0.7.0 기준 31종. 추가 시 테스트 갱신 필수.
         # 내역: SUCCESS(2) + HOLD(2) + REGIME(2) + FILTER(3) + STALE(2)
         #     + ORDER_VAL(3) + DEPRECATED(2) + STRATEGY_EXC(2) + CCXT(4)
         #     + ORDER_API(4) + NETWORK(3) + UNKNOWN(2) = 31.
-        # v0.8.0:  + SKIP_ORDER_AUTOMATION_OFF = 32.
-        # v0.10.0: + SIGNAL_VALIDATION_FAILED   = 33.
-        assert len(ExecutionReasonCode) == 33
+        # v0.8.0:  + SKIP_ORDER_AUTOMATION_OFF                          = 32.
+        # v0.10.0: + SIGNAL_VALIDATION_FAILED                           = 33.
+        # v0.11.0: + CLOSE_WITHOUT_POSITION + DUPLICATE_OPEN_DENIED
+        #          + DISPATCH_GUARD_FAILED (signal-guard-defense-in-depth) = 36.
+        assert len(ExecutionReasonCode) == 36
 
     def test_all_values_within_db_varchar64(self) -> None:
         """DB 컬럼 reason_code VARCHAR(64) 정합."""

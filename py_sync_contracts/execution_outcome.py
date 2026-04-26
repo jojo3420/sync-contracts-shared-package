@@ -23,6 +23,20 @@ Plan SC: SC-2 — py-algo 모든 계측 지점에서 outcome+reason_code 생성.
             py-algo SignalValidator 계열 오류 (signal_data schema 위반) 가
             ERROR_UNKNOWN/UNCLASSIFIED 로 silent 강등되던 갭을 분류.
             iterator 가 SignalValidationError marker 만 catch 해 본 reason 으로 분류.
+    v0.11.0: signal-guard-defense-in-depth feature 연계 (BCH/KRW prod 사고 대응).
+            ExecutionOutcome 3종 + ExecutionReasonCode 3종 신규 추가 (하위 호환).
+                Outcome:
+                    - SKIP_NO_POSITION_TO_CLOSE: close 신호인데 보유 포지션 없음.
+                      Layer B (SignalOrchestrator unconditional guard) 차단.
+                    - SKIP_DUPLICATE_OPEN: open 신호인데 동일 방향 보유 + pyramid OFF.
+                      Layer B 차단.
+                    - ERROR_DISPATCH_GUARD: dispatch 직전 PositionRepository 조회 실패
+                      또는 one-way mode 위반 (복수 active row) 감지.
+                ReasonCode:
+                    - CLOSE_WITHOUT_POSITION (SKIP_NO_POSITION_TO_CLOSE 매핑)
+                    - DUPLICATE_OPEN_DENIED (SKIP_DUPLICATE_OPEN 매핑)
+                    - DISPATCH_GUARD_FAILED (ERROR_DISPATCH_GUARD 매핑)
+            py-algo Module-5 SignalOrchestrator Layer B 가드에서 사용.
 
 버전 규칙:
     - minor bump: 새 outcome/reason 값 추가 (하위 호환).
@@ -59,12 +73,23 @@ class ExecutionOutcome(str, Enum):
     # v0.8.0 — trading-automation-truthfulness: master switch OFF 상태에서
     # dispatch 단계만 skip (시그널 평가는 유지).
     SKIP_AUTOMATION_OFF = "SKIP_AUTOMATION_OFF"
+    # v0.11.0 — signal-guard-defense-in-depth Layer B unconditional guard.
+    # close 신호 (sell/close_long/close_short) 인데 PositionRepository 조회 결과
+    # 보유 포지션 없음. dispatch 차단 + send_signal 미호출 → signal_requests row 미생성.
+    SKIP_NO_POSITION_TO_CLOSE = "SKIP_NO_POSITION_TO_CLOSE"
+    # v0.11.0 — signal-guard-defense-in-depth Layer B.
+    # open 신호 (buy/open_long/open_short) 인데 동일 방향 보유 + pyramid_policy.enabled=False.
+    SKIP_DUPLICATE_OPEN = "SKIP_DUPLICATE_OPEN"
     # ── ERROR (예외) ───────────────────────────────────────────────────
     ERROR_STRATEGY_EXCEPTION = "ERROR_STRATEGY_EXCEPTION"
     ERROR_EXCHANGE_API = "ERROR_EXCHANGE_API"
     ERROR_ORDER_API = "ERROR_ORDER_API"
     ERROR_NETWORK = "ERROR_NETWORK"
     ERROR_UNKNOWN = "ERROR_UNKNOWN"
+    # v0.11.0 — signal-guard-defense-in-depth Layer B.
+    # dispatch 직전 PositionRepository SELECT 실패 또는 one-way mode 위반
+    # (futures long+short 동시 보유 — 비정상 데이터 상태) 감지.
+    ERROR_DISPATCH_GUARD = "ERROR_DISPATCH_GUARD"
 
 
 class ExecutionReasonCode(str, Enum):
@@ -101,6 +126,12 @@ class ExecutionReasonCode(str, Enum):
     # ── SKIP_AUTOMATION_OFF (v0.8.0) ────────────────────────────────────
     # dashboard master switch off 로 dispatch 직전에 skip 된 경우 기록.
     SKIP_ORDER_AUTOMATION_OFF = "SKIP_ORDER_AUTOMATION_OFF"
+    # ── SKIP_NO_POSITION_TO_CLOSE (v0.11.0) ─────────────────────────────
+    # close 신호 (sell/close_long/close_short) 인데 보유 포지션 0 — Layer B 차단.
+    CLOSE_WITHOUT_POSITION = "CLOSE_WITHOUT_POSITION"
+    # ── SKIP_DUPLICATE_OPEN (v0.11.0) ───────────────────────────────────
+    # open 신호 (buy/open_long/open_short) 인데 동일 방향 보유 + pyramid OFF — Layer B 차단.
+    DUPLICATE_OPEN_DENIED = "DUPLICATE_OPEN_DENIED"
     # ── ERROR_STRATEGY_EXCEPTION ───────────────────────────────────────
     GENERATE_SIGNALS_FAILED = "GENERATE_SIGNALS_FAILED"
     REGIME_CLASSIFIER_FAILED = "REGIME_CLASSIFIER_FAILED"
@@ -122,6 +153,10 @@ class ExecutionReasonCode(str, Enum):
     CONNECTION_REFUSED = "CONNECTION_REFUSED"
     DNS_FAILED = "DNS_FAILED"
     TLS_HANDSHAKE_FAILED = "TLS_HANDSHAKE_FAILED"
+    # ── ERROR_DISPATCH_GUARD (v0.11.0) ─────────────────────────────────
+    # SignalOrchestrator Layer B 가드의 PositionRepository 조회 실패 또는
+    # one-way mode 위반 (복수 active row) 감지.
+    DISPATCH_GUARD_FAILED = "DISPATCH_GUARD_FAILED"
     # ── ERROR_UNKNOWN ──────────────────────────────────────────────────
     UNCLASSIFIED = "UNCLASSIFIED"
     CYCLE_INCOMPLETE_UNMAPPED = "CYCLE_INCOMPLETE_UNMAPPED"
@@ -170,6 +205,19 @@ OUTCOME_REASON_WHITELIST: dict[ExecutionOutcome, frozenset[ExecutionReasonCode |
     # v0.8.0 — automation master switch off 로 dispatch skip.
     ExecutionOutcome.SKIP_AUTOMATION_OFF: frozenset({
         ExecutionReasonCode.SKIP_ORDER_AUTOMATION_OFF,
+        None,
+    }),
+    # v0.11.0 — signal-guard-defense-in-depth Layer B unconditional guard.
+    ExecutionOutcome.SKIP_NO_POSITION_TO_CLOSE: frozenset({
+        ExecutionReasonCode.CLOSE_WITHOUT_POSITION,
+        None,
+    }),
+    ExecutionOutcome.SKIP_DUPLICATE_OPEN: frozenset({
+        ExecutionReasonCode.DUPLICATE_OPEN_DENIED,
+        None,
+    }),
+    ExecutionOutcome.ERROR_DISPATCH_GUARD: frozenset({
+        ExecutionReasonCode.DISPATCH_GUARD_FAILED,
         None,
     }),
     ExecutionOutcome.ERROR_STRATEGY_EXCEPTION: frozenset({
