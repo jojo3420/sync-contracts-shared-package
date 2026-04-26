@@ -37,6 +37,16 @@ Plan SC: SC-2 — py-algo 모든 계측 지점에서 outcome+reason_code 생성.
                     - DUPLICATE_OPEN_DENIED (SKIP_DUPLICATE_OPEN 매핑)
                     - DISPATCH_GUARD_FAILED (ERROR_DISPATCH_GUARD 매핑)
             py-algo Module-5 SignalOrchestrator Layer B 가드에서 사용.
+    v0.12.0: futures trade_type 의미적 정확성 회복 (py-algo collector reason_code).
+            ExecutionReasonCode 4종 신규 추가 (하위 호환).
+                - SIGNAL_OPEN_LONG  (futures long 진입)
+                - SIGNAL_OPEN_SHORT (futures short 진입)
+                - SIGNAL_CLOSE_LONG (futures long 청산)
+                - SIGNAL_CLOSE_SHORT (futures short 청산)
+            기존 SIGNAL_BUY/SIGNAL_SELL 은 spot(현물) 거래소 매수/매도 전용으로
+            의미를 한정. 과거 trade_type=='buy' 단일 비교로 futures 진입/청산이
+            SIGNAL_SELL 로 잘못 분류되어 발생한 통계 왜곡을 회수한다.
+            py-algo signal_orchestrator 가 trade_type → reason_code 1:1 매핑.
 
 버전 규칙:
     - minor bump: 새 outcome/reason 값 추가 (하위 호환).
@@ -101,8 +111,15 @@ class ExecutionReasonCode(str, Enum):
     """
 
     # ── SUCCESS_SIGNAL ─────────────────────────────────────────────────
+    # spot(현물) 거래소 전용: 매수 / 매도.
     SIGNAL_BUY = "SIGNAL_BUY"
     SIGNAL_SELL = "SIGNAL_SELL"
+    # v0.12.0 — futures(선물) trade_type 1:1 매핑.
+    # 진입(open) / 청산(close) × 방향(long/short) 4 종.
+    SIGNAL_OPEN_LONG = "SIGNAL_OPEN_LONG"
+    SIGNAL_OPEN_SHORT = "SIGNAL_OPEN_SHORT"
+    SIGNAL_CLOSE_LONG = "SIGNAL_CLOSE_LONG"
+    SIGNAL_CLOSE_SHORT = "SIGNAL_CLOSE_SHORT"
     # ── NO_SIGNAL_HOLD ─────────────────────────────────────────────────
     HOLD_NO_CROSSOVER = "HOLD_NO_CROSSOVER"
     HOLD_CONDITION_NOT_MET = "HOLD_CONDITION_NOT_MET"
@@ -169,6 +186,11 @@ OUTCOME_REASON_WHITELIST: dict[ExecutionOutcome, frozenset[ExecutionReasonCode |
     ExecutionOutcome.SUCCESS_SIGNAL: frozenset({
         ExecutionReasonCode.SIGNAL_BUY,
         ExecutionReasonCode.SIGNAL_SELL,
+        # v0.12.0 — futures 1:1 매핑.
+        ExecutionReasonCode.SIGNAL_OPEN_LONG,
+        ExecutionReasonCode.SIGNAL_OPEN_SHORT,
+        ExecutionReasonCode.SIGNAL_CLOSE_LONG,
+        ExecutionReasonCode.SIGNAL_CLOSE_SHORT,
     }),
     ExecutionOutcome.NO_SIGNAL_HOLD: frozenset({
         ExecutionReasonCode.HOLD_NO_CROSSOVER,

@@ -88,9 +88,10 @@ class TestExecutionReasonCode:
     v0.8.0: SKIP_ORDER_AUTOMATION_OFF 추가 → 32.
     v0.10.0: SIGNAL_VALIDATION_FAILED 추가 → 33.
     v0.11.0: CLOSE_WITHOUT_POSITION + DUPLICATE_OPEN_DENIED + DISPATCH_GUARD_FAILED → 36.
+    v0.12.0: SIGNAL_OPEN_LONG + SIGNAL_OPEN_SHORT + SIGNAL_CLOSE_LONG + SIGNAL_CLOSE_SHORT → 40.
     """
 
-    def test_count_matches_v0110(self) -> None:
+    def test_count_matches_v0120(self) -> None:
         # v0.7.0 기준 31종. 추가 시 테스트 갱신 필수.
         # 내역: SUCCESS(2) + HOLD(2) + REGIME(2) + FILTER(3) + STALE(2)
         #     + ORDER_VAL(3) + DEPRECATED(2) + STRATEGY_EXC(2) + CCXT(4)
@@ -99,7 +100,9 @@ class TestExecutionReasonCode:
         # v0.10.0: + SIGNAL_VALIDATION_FAILED                           = 33.
         # v0.11.0: + CLOSE_WITHOUT_POSITION + DUPLICATE_OPEN_DENIED
         #          + DISPATCH_GUARD_FAILED (signal-guard-defense-in-depth) = 36.
-        assert len(ExecutionReasonCode) == 36
+        # v0.12.0: + SIGNAL_OPEN_LONG + SIGNAL_OPEN_SHORT
+        #          + SIGNAL_CLOSE_LONG + SIGNAL_CLOSE_SHORT (futures 의미적 정확성) = 40.
+        assert len(ExecutionReasonCode) == 40
 
     def test_all_values_within_db_varchar64(self) -> None:
         """DB 컬럼 reason_code VARCHAR(64) 정합."""
@@ -118,6 +121,13 @@ class TestExecutionReasonCode:
     def test_signal_buy_sell_present(self) -> None:
         assert ExecutionReasonCode.SIGNAL_BUY.value == "SIGNAL_BUY"
         assert ExecutionReasonCode.SIGNAL_SELL.value == "SIGNAL_SELL"
+
+    def test_signal_futures_reasons_present(self) -> None:
+        """v0.12.0 — futures trade_type 1:1 매핑 reason_code."""
+        assert ExecutionReasonCode.SIGNAL_OPEN_LONG.value == "SIGNAL_OPEN_LONG"
+        assert ExecutionReasonCode.SIGNAL_OPEN_SHORT.value == "SIGNAL_OPEN_SHORT"
+        assert ExecutionReasonCode.SIGNAL_CLOSE_LONG.value == "SIGNAL_CLOSE_LONG"
+        assert ExecutionReasonCode.SIGNAL_CLOSE_SHORT.value == "SIGNAL_CLOSE_SHORT"
 
     def test_cycle_incomplete_present(self) -> None:
         # 사이클 완결성 검증용 reason (Plan §Idea 1).
@@ -139,10 +149,15 @@ class TestOutcomeReasonWhitelist:
         assert set(OUTCOME_REASON_WHITELIST.keys()) == set(ExecutionOutcome)
 
     def test_success_signal_requires_buy_or_sell(self) -> None:
-        # SUCCESS_SIGNAL 은 반드시 BUY 또는 SELL — None 불허.
+        # SUCCESS_SIGNAL 은 반드시 SIGNAL_* reason — None 불허.
+        # v0.12.0: futures 1:1 매핑 4종 추가.
         allowed = OUTCOME_REASON_WHITELIST[ExecutionOutcome.SUCCESS_SIGNAL]
         assert ExecutionReasonCode.SIGNAL_BUY in allowed
         assert ExecutionReasonCode.SIGNAL_SELL in allowed
+        assert ExecutionReasonCode.SIGNAL_OPEN_LONG in allowed
+        assert ExecutionReasonCode.SIGNAL_OPEN_SHORT in allowed
+        assert ExecutionReasonCode.SIGNAL_CLOSE_LONG in allowed
+        assert ExecutionReasonCode.SIGNAL_CLOSE_SHORT in allowed
         assert None not in allowed
 
     def test_hold_allows_none(self) -> None:
