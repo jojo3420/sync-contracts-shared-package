@@ -50,7 +50,7 @@ order ──(HTTP GET /candles, /ticker)──▶ algo
 |--------|------|------|
 | `backtest_strategy`, `strategy_timeframe_config`, `trading_symbols`, `symbol_risk_config` | dashboard | dashboard, algo, order\* |
 | `strategy_symbol_mapping` (v0.3.0 rename) | dashboard | dashboard, algo |
-| `symbols` (v0.3.0 신설) | dashboard | dashboard, algo, order |
+| `symbols` (v0.3.0 신설) \*\*\*\* | dashboard | dashboard, algo, order |
 | `collection_targets` (v0.4.0, **소유권 이전**) \*\*\* | dashboard \*\* | dashboard, algo, order |
 | `signal_request` | algo | algo, dashboard |
 | `order_history` | order | order, dashboard, algo |
@@ -64,6 +64,17 @@ order ──(HTTP GET /candles, /ticker)──▶ algo
 - TO-BE: dashboard `StrategySymbolOrchestrator` 가 매핑 저장의 부수효과로 upsert/soft-deactivate 수행. py-algo 는 **읽기 전용** 으로 전환.
 - 근거: `grep -rn "INSERT\|UPDATE.*collection_targets" py-algo-stragegy-system-v1/` → 결과 0 건 (2026-04-17 실측). 매핑 주체 = 수집 주체가 자연스러움.
 - 구독 신호: py-algo 는 `SYMBOL_COLLECTION_LINKED` 이벤트로 "새 수집 타겟 생성" 을 비동기 인지 가능 (handler 구현은 P2.1 follow-up).
+
+\*\*\*\* **`symbols.symbol` 표기 규칙 (Notation SSoT, 2026-04-27)**
+- **저장 포맷 = CCXT 표기 (`BTC/USDT`, 슬래시 포함)**. dashboard / algo / order 모두 이 포맷을 단일 출처로 사용.
+- 근거: `crypto_timeseries`, `portfolio.positions`, `signal_request`, `order_history` 등 도메인 테이블이 모두 CCXT 표기를 키로 사용하므로 마스터 테이블도 동일 표기 유지.
+- **거래소 native 포맷 변환은 어댑터 경계의 책임**. 거래소별 정규화 규칙:
+  - Bitget v2 mix endpoint: `symbol.replace("/", "")` → `BTCUSDT`. 슬래시 포함 시 `code:40034 "Parameter does not exist"` 거부.
+  - Upbit: `BTC/USDT` → `USDT-BTC` (KRW/USDT 등 quote 우선 표기).
+  - Binance: `symbol.replace("/", "")` (Bitget 과 동일).
+- 어댑터(collector / order client / WebSocket subscriber 등) 는 진입에서 자가-방어 정규화를 수행해야 한다. 호출자가 어떤 포맷을 넘기든 안전하도록 Misuse-proof 설계 (senior-mindset §4 — "오용 가능한 인터페이스는 반드시 오용된다").
+- **회귀 사례 (2026-04-27 prod 인시던트)**: dashboard `BitgetFundingRateCollector.fetch_history` 가 정규화 누락 → `symbols` 테이블의 `BTC/USDT` 가 그대로 Bitget v2 API 에 전달 → 활성 22 심볼 전건 400 → funding rate 적재 중단. fix: `backend/app/services/funding_rate/collector.py` 진입에 `api_symbol = symbol.replace("/", "")` 적용 (`repository.py:36` 의 기존 정규화 패턴과 대칭). 회귀 테스트: `tests/unit/services/funding_rate/test_collector.py::test_fetch_history_normalizes_ccxt_slash_symbol_to_bitget_native`.
+- 신규 거래소 어댑터 추가 시 Plan/Design 체크리스트에 "심볼 표기 정규화 진입점 가드" 항목을 포함하고, 회귀 테스트로 (CCXT 입력 → native 전송) 검증을 강제한다.
 
 \*\*\* **`sync_version` 컬럼 보강 (2026-04-18, collection-targets-sync-version)**
 - `TargetType` enum 에 테이블을 추가한 owner repo 는 반드시 `sync_version BIGINT NOT NULL DEFAULT 0` 컬럼을 제공해야 한다. subscriber 는 `SELECT MAX(sync_version)` (state init) + `WHERE sync_version > :last` (catchup) 프로토콜을 전 테이블에 동일하게 적용하므로, 컬럼 부재 시 `column does not exist` 런타임 에러 발생.
@@ -92,3 +103,4 @@ order ──(HTTP GET /candles, /ticker)──▶ algo
 | 2026-04-15 | 최초 작성 — 3개 프로젝트 통합 SSoT 수립 |
 | 2026-04-17 | v0.3.0: `SYMBOLS`·`STRATEGY_SYMBOL_MAPPING` TargetType 추가 (schema-normalization). v0.4.0: `calculate_required_candles` 순수함수 승격 + `SYMBOL_COLLECTION_LINKED`·`COLLECTION_TARGETS` 추가 + `collection_targets` 쓰기 소유권 py-algo → dashboard 이전 (symbol-mapping-auto P2/3 Module 5). py-algo 는 `get_required_candles` 를 sync-contracts 위임으로 전환. |
 | 2026-04-18 | dashboard `collection_targets` 에 `sync_version BIGINT NOT NULL DEFAULT 0` 컬럼 보강 (`backend/migrations/029_collection_targets_add_sync_version.sql`, idempotent). symbol-mapping-auto v0.4.0 에서 누락된 owner 의무 해소. §4 footnote \*\*\* 추가: "enum 에 테이블 추가 시 owner 는 sync_version 컬럼 제공 의무". py-algo / order 측 변경 없음. (collection-targets-sync-version PDCA) |
+| 2026-04-27 | §4 footnote \*\*\*\* 추가: `symbols.symbol` 표기 규칙 (CCXT SSoT) + 거래소 어댑터 경계의 native 정규화 책임. 계기: prod 인시던트 — dashboard `BitgetFundingRateCollector.fetch_history` 가 슬래시 정규화 누락으로 Bitget v2 API 22 심볼 전건 400. 신규 거래소 어댑터 추가 시 정규화 가드 + 회귀 테스트 의무화. (funding-rate-bitget-symbol-fix) |
