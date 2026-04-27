@@ -75,6 +75,12 @@ order ──(HTTP GET /candles, /ticker)──▶ algo
 - 어댑터(collector / order client / WebSocket subscriber 등) 는 진입에서 자가-방어 정규화를 수행해야 한다. 호출자가 어떤 포맷을 넘기든 안전하도록 Misuse-proof 설계 (senior-mindset §4 — "오용 가능한 인터페이스는 반드시 오용된다").
 - **회귀 사례 (2026-04-27 prod 인시던트)**: dashboard `BitgetFundingRateCollector.fetch_history` 가 정규화 누락 → `symbols` 테이블의 `BTC/USDT` 가 그대로 Bitget v2 API 에 전달 → 활성 22 심볼 전건 400 → funding rate 적재 중단. fix: `backend/app/services/funding_rate/collector.py` 진입에 `api_symbol = symbol.replace("/", "")` 적용 (`repository.py:36` 의 기존 정규화 패턴과 대칭). 회귀 테스트: `tests/unit/services/funding_rate/test_collector.py::test_fetch_history_normalizes_ccxt_slash_symbol_to_bitget_native`.
 - 신규 거래소 어댑터 추가 시 Plan/Design 체크리스트에 "심볼 표기 정규화 진입점 가드" 항목을 포함하고, 회귀 테스트로 (CCXT 입력 → native 전송) 검증을 강제한다.
+- **dashboard 자세한 가드 룰 + 매핑표 + 회귀 테스트 헬퍼 (2026-04-27, exchange-adapter-symbol-guard PDCA)**:
+  - 룰 (4항목 PR 체크리스트): `trading-admin-dashboard/rules/exchange-adapter.md`
+  - 매핑표 (5+ 거래소 변환 함수 + 패턴 + FAQ): `trading-admin-dashboard/docs/CONVENTIONS/exchange-adapter-guard.md`
+  - 회귀 테스트 헬퍼 (`assert_fetch_normalizes`): `trading-admin-dashboard/backend/tests/utils/exchange_adapter_assertions.py`
+  - Phase A 점검 보고서 (5개 모듈 누락 0건): `trading-admin-dashboard/docs/03-analysis/exchange-adapter-symbol-audit.md`
+  - 신규 거래소 추가 시 양 repo (sync-contracts ARCHITECTURE.md ★★★★ + dashboard 위 4개 산출물) **동시 갱신 의무**.
 
 \*\*\* **`sync_version` 컬럼 보강 (2026-04-18, collection-targets-sync-version)**
 - `TargetType` enum 에 테이블을 추가한 owner repo 는 반드시 `sync_version BIGINT NOT NULL DEFAULT 0` 컬럼을 제공해야 한다. subscriber 는 `SELECT MAX(sync_version)` (state init) + `WHERE sync_version > :last` (catchup) 프로토콜을 전 테이블에 동일하게 적용하므로, 컬럼 부재 시 `column does not exist` 런타임 에러 발생.
@@ -104,3 +110,4 @@ order ──(HTTP GET /candles, /ticker)──▶ algo
 | 2026-04-17 | v0.3.0: `SYMBOLS`·`STRATEGY_SYMBOL_MAPPING` TargetType 추가 (schema-normalization). v0.4.0: `calculate_required_candles` 순수함수 승격 + `SYMBOL_COLLECTION_LINKED`·`COLLECTION_TARGETS` 추가 + `collection_targets` 쓰기 소유권 py-algo → dashboard 이전 (symbol-mapping-auto P2/3 Module 5). py-algo 는 `get_required_candles` 를 sync-contracts 위임으로 전환. |
 | 2026-04-18 | dashboard `collection_targets` 에 `sync_version BIGINT NOT NULL DEFAULT 0` 컬럼 보강 (`backend/migrations/029_collection_targets_add_sync_version.sql`, idempotent). symbol-mapping-auto v0.4.0 에서 누락된 owner 의무 해소. §4 footnote \*\*\* 추가: "enum 에 테이블 추가 시 owner 는 sync_version 컬럼 제공 의무". py-algo / order 측 변경 없음. (collection-targets-sync-version PDCA) |
 | 2026-04-27 | §4 footnote \*\*\*\* 추가: `symbols.symbol` 표기 규칙 (CCXT SSoT) + 거래소 어댑터 경계의 native 정규화 책임. 계기: prod 인시던트 — dashboard `BitgetFundingRateCollector.fetch_history` 가 슬래시 정규화 누락으로 Bitget v2 API 22 심볼 전건 400. 신규 거래소 어댑터 추가 시 정규화 가드 + 회귀 테스트 의무화. (funding-rate-bitget-symbol-fix) |
+| 2026-04-27 | §4 footnote \*\*\*\* 보강: dashboard 측 가드 룰 + CONVENTIONS 매핑표 (5+ 거래소) + 회귀 테스트 헬퍼 (`assert_fetch_normalizes`) + Phase A 점검 보고서 (5개 모듈 누락 0건) cross-link. 신규 거래소 추가 시 양 repo 동시 갱신 의무 명시. (exchange-adapter-symbol-guard PDCA) |
