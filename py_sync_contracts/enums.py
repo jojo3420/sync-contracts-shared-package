@@ -26,6 +26,9 @@ class SyncEventType(str, Enum):
                 order-api: collection_targets.is_active=false + APScheduler remove.
                 py-algo: strategy_exchange_symbol 의 paper/live_trading 비활성 + 열린
                 포지션 자동 청산 금지(경고 로그만)).
+        v0.13.0: TRAILING_STOP_CONFIG_CHANGED 추가 (trailing-stop-management feature —
+                dashboard canonical trailing_stop_config 변경 시 publish.
+                py-algo: config polling/감시 job trigger. order-api: 미구독).
     """
 
     STRATEGY_PARAMS_CHANGED = "STRATEGY_PARAMS_CHANGED"
@@ -38,6 +41,8 @@ class SyncEventType(str, Enum):
     COLLECTION_TARGET_CHANGED = "COLLECTION_TARGET_CHANGED"
     # v0.6.0
     SYMBOL_DEPRECATED = "SYMBOL_DEPRECATED"
+    # v0.13.0
+    TRAILING_STOP_CONFIG_CHANGED = "TRAILING_STOP_CONFIG_CHANGED"
 
 
 class TargetType(str, Enum):
@@ -54,7 +59,10 @@ class TargetType(str, Enum):
         v0.9.0: PAIR_TRADE_CONFIG 추가 (pair-trade-dashboard-integration feature —
                 dashboard ↔ py-algo 간 페어 트레이드 enabled/paused 토글 sync.
                 별도 채널 신설 대신 단일 SYNC_CHANNEL + TargetType 라우팅 모델
-                재사용. Design Ref: pair-trade-dashboard-integration.design.md v0.2 §4.8).
+                재사용. Design Ref: pair-trade-dashboard-integration.design.md v0.2 절 4.8).
+        v0.13.0: TRAILING_STOP_CONFIG 추가 (trailing-stop-management feature —
+                dashboard canonical trailing_stop_config 변경 시 sync.
+                테이블명: trailing_stop_config).
     """
 
     # 현행 (renamed)
@@ -67,6 +75,8 @@ class TargetType(str, Enum):
     COLLECTION_TARGETS = "collection_targets"
     # v0.9.0
     PAIR_TRADE_CONFIG = "pair_trade_config"
+    # v0.13.0
+    TRAILING_STOP_CONFIG = "trailing_stop_config"
 
     # deprecated (하위호환 — Step 4에서 제거)
     BACKTEST_STRATEGY = "strategies"  # alias → same value as STRATEGIES
