@@ -16,8 +16,8 @@ Publisher(trading-admin-dashboard)와 Subscriber(py-algo-stragegy-system-v1)가
     from py_sync_contracts import publish_sync_event, SyncPayload
 
 버전 규칙:
-    - minor bump: 새 enum 값·필드 추가 (하위 호환)
-    - major bump: enum 삭제·필드 제거·채널명 변경 (파괴적 변경)
+    - minor bump: 새 enum 값-필드 추가 (하위 호환)
+    - major bump: enum 삭제-필드 제거-채널명 변경 (파괴적 변경)
 """
 from __future__ import annotations
 
@@ -35,7 +35,7 @@ from py_sync_contracts.strategy_requirements import calculate_required_candles
 from py_sync_contracts.validators import ACTOR_REGEX
 
 # pyproject.toml 과 반드시 일치시킨다. 드리프트 방지.
-__version__: str = "0.12.0"
+__version__: str = "0.13.0"
 
 __all__ = [
     "__version__",
