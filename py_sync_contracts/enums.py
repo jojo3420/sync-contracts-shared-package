@@ -59,7 +59,7 @@ class TargetType(str, Enum):
         v0.9.0: PAIR_TRADE_CONFIG 추가 (pair-trade-dashboard-integration feature —
                 dashboard ↔ py-algo 간 페어 트레이드 enabled/paused 토글 sync.
                 별도 채널 신설 대신 단일 SYNC_CHANNEL + TargetType 라우팅 모델
-                재사용. Design Ref: pair-trade-dashboard-integration.design.md v0.2 절 4.8).
+                재사용. Design Ref: pair-trade-dashboard-integration.design.md v0.2 §4.8).
         v0.13.0: TRAILING_STOP_CONFIG 추가 (trailing-stop-management feature —
                 dashboard canonical trailing_stop_config 변경 시 sync.
                 테이블명: trailing_stop_config).

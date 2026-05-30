@@ -16,8 +16,8 @@ Publisher(trading-admin-dashboard)와 Subscriber(py-algo-stragegy-system-v1)가
     from py_sync_contracts import publish_sync_event, SyncPayload
 
 버전 규칙:
-    - minor bump: 새 enum 값-필드 추가 (하위 호환)
-    - major bump: enum 삭제-필드 제거-채널명 변경 (파괴적 변경)
+    - minor bump: 새 enum 값·필드 추가 (하위 호환)
+    - major bump: enum 삭제·필드 제거·채널명 변경 (파괴적 변경)
 """
 from __future__ import annotations
 
