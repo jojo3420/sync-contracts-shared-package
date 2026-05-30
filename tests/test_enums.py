@@ -5,12 +5,13 @@ from py_sync_contracts import SyncAction, SyncEventType, TargetType
 
 
 class TestSyncEventType:
-    def test_count_is_8(self) -> None:
+    def test_count_is_9(self) -> None:
         # v0.1.0: 5종 / v0.4.0: SYMBOL_COLLECTION_LINKED 추가 → 6종.
         # v0.5.0: COLLECTION_TARGET_CHANGED 추가 → 7종.
         # v0.6.0: SYMBOL_DEPRECATED 추가 → 8종.
+        # v0.13.0: TRAILING_STOP_CONFIG_CHANGED 추가 → 9종.
         # 추가 시 minor bump 필요.
-        assert len(SyncEventType) == 8
+        assert len(SyncEventType) == 9
 
     def test_all_values_are_strings(self) -> None:
         for member in SyncEventType:
@@ -34,6 +35,8 @@ class TestSyncEventType:
         assert SyncEventType.COLLECTION_TARGET_CHANGED.value == "COLLECTION_TARGET_CHANGED"
         # v0.6.0 추가
         assert SyncEventType.SYMBOL_DEPRECATED.value == "SYMBOL_DEPRECATED"
+        # v0.13.0 추가
+        assert SyncEventType.TRAILING_STOP_CONFIG_CHANGED.value == "TRAILING_STOP_CONFIG_CHANGED"
 
     def test_roundtrip_from_string(self) -> None:
         assert SyncEventType("SYMBOL_ACTIVE_CHANGED") is SyncEventType.SYMBOL_ACTIVE_CHANGED
@@ -51,18 +54,24 @@ class TestSyncEventType:
             SyncEventType("SYMBOL_DEPRECATED")
             is SyncEventType.SYMBOL_DEPRECATED
         )
+        # v0.13.0
+        assert (
+            SyncEventType("TRAILING_STOP_CONFIG_CHANGED")
+            is SyncEventType.TRAILING_STOP_CONFIG_CHANGED
+        )
 
 
 class TestTargetType:
-    def test_count_is_9(self) -> None:
+    def test_count_is_10(self) -> None:
         # len(Enum) 은 unique value 기준 — alias 는 동일 member 로 카운트.
         # v0.3.0: STRATEGIES, STRATEGY_TIMEFRAMES, TRADING_SYMBOLS, SYMBOLS,
         #         SYMBOL_RISK_CONFIG, STRATEGY_SYMBOL_MAPPING, STRATEGY_EXCHANGE_SYMBOL
         #         → 7 unique.
         # v0.4.0: COLLECTION_TARGETS 추가 → 8 unique.
         # v0.9.0: PAIR_TRADE_CONFIG 추가 → 9 unique. (pair-trade-dashboard-integration)
+        # v0.13.0: TRAILING_STOP_CONFIG 추가 → 10 unique. (trailing-stop-management)
         # (BACKTEST_STRATEGY, STRATEGY_TIMEFRAME_CONFIG 는 alias → 카운트 미포함)
-        assert len(TargetType) == 9
+        assert len(TargetType) == 10
 
     def test_current_values_match_table_names(self) -> None:
         # 현행 (renamed, v0.3.0+) — enum value == 실제 DB 테이블명
@@ -76,6 +85,8 @@ class TestTargetType:
         assert TargetType.COLLECTION_TARGETS.value == "collection_targets"
         # v0.9.0 추가
         assert TargetType.PAIR_TRADE_CONFIG.value == "pair_trade_config"
+        # v0.13.0 추가
+        assert TargetType.TRAILING_STOP_CONFIG.value == "trailing_stop_config"
 
     def test_deprecated_aliases_preserved(self) -> None:
         # 하위호환용 alias — v0.3.0 에서 deprecated 되었지만 Step 4 까지 유지.
@@ -93,6 +104,8 @@ class TestTargetType:
         assert TargetType("collection_targets") is TargetType.COLLECTION_TARGETS
         # v0.9.0
         assert TargetType("pair_trade_config") is TargetType.PAIR_TRADE_CONFIG
+        # v0.13.0
+        assert TargetType("trailing_stop_config") is TargetType.TRAILING_STOP_CONFIG
 
 
 class TestSyncAction:
