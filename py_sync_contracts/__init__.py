@@ -32,10 +32,18 @@ from py_sync_contracts.execution_outcome import (
 from py_sync_contracts.payload import PayloadError, SyncPayload, parse_payload
 from py_sync_contracts.publisher import publish_sync_event
 from py_sync_contracts.strategy_requirements import calculate_required_candles
+from py_sync_contracts.trailing_stop_rules import (
+    combine_stops,
+    compute_trailing_stop,
+    is_activated,
+    is_triggered,
+    update_peak,
+    wilder_atr,
+)
 from py_sync_contracts.validators import ACTOR_REGEX
 
 # pyproject.toml 과 반드시 일치시킨다. 드리프트 방지.
-__version__: str = "0.13.0"
+__version__: str = "0.14.0"
 
 __all__ = [
     "__version__",
